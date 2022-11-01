@@ -1,0 +1,64 @@
+<odoo>
+    <data>
+
+        <!-- Add REPAIR button to asset form view -->
+        <record id="serial_as_asset_form_create_repair" model="ir.ui.view">
+            <field name="name">serial_as_asset_form_create_repair</field>
+            <field name="model">stock.production.lot</field>
+            <field name="inherit_id" ref="serial_as_asset.serial_as_asset_checkout_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="header" position="inside">
+                    <button name='asset_repair' string='REPAIR' type='object' class="oe_highlight" groups="stock.group_stock_user" />
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Repair template tree view -->
+        <record id="view_repair_template_tree" model="ir.ui.view">
+            <field name="name">repair.tree.template</field>
+            <field name="model">repair.order</field>
+            <field name="priority">99</field>
+            <field name="arch" type="xml">
+                <tree string="Repairs order" multi_edit="1" sample="1">
+                    <field name="name" invisible="1" />
+                    <field name="description" string="Repair Template" />
+                </tree>
+            </field>
+        </record>
+
+        <!-- Extend the repair order form view for repair templates -->
+        <record id="view_repair_order_form_template" model="ir.ui.view">
+            <field name="inherit_id" ref="repair.view_repair_order_form" />
+            <field name="model">repair.order</field>
+            <field name="name">repair.form.template</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='description']" position="before">
+                    <field name="is_template" readonly="1" force_save="1" attrs="{'invisible': [('is_template','=', False)]}" />
+                </xpath>
+                <xpath expr="//field[@name='partner_id']" position="before">
+                    <label for="template_id" attrs="{'invisible': [('is_template','=', True)]}" />
+                    <div class="o_row" attrs="{'invisible': [('is_template','=', True)]}">
+                        <field name="template_id" />
+                        <button name="get_template" type="object" string="Get Parts" class="oe_read_only" />
+                    </div>
+                </xpath>
+                <xpath expr="//field[@name='lot_id']" position="replace">
+                    <field name="lot_id" context="{'default_product_id': product_id, 'default_company_id': company_id}" groups="stock.group_production_lot" attrs="{'required':[('tracking', 'in', ['serial', 'lot']), ('is_template', '=', False)], 'invisible': ['|',('tracking', 'not in', ['serial', 'lot']),('is_template', '=', True)], 'readonly': ['|', ('state', '=', 'done'), ('tracking', 'not in', ['serial', 'lot'])]}" />
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Window action for Repair Templates menu item -->
+        <record id="action_repair_template" model="ir.actions.act_window">
+            <field name="name">Repair Templates</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">repair.order</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('is_template', '=', True)]</field>
+            <field name="context">{'default_is_template': True}</field>
+        </record>
+
+        <menuitem id="repair_templates" name="Templates" parent="repair.repair_menu_config" action="action_repair_template" />
+
+    </data>
+</odoo>
